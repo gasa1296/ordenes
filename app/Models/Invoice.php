@@ -6,23 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Product extends Model
+class Invoice extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductFactory> */
+    /** @use HasFactory<\Database\Factories\InvoiceFactory> */
     use HasFactory;
-
-
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
-    protected $fillable = ['name', 'value'];
+    protected $fillable = ['name', 'email',];
 
     /**
-     * The roles that belong to the user.
+     * The product that belong to the invoices.
      */
-    public function invoices(): BelongsToMany
+    public function products(): BelongsToMany
     {
         return $this->belongsToMany(Invoice::class);
     }
