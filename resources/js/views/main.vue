@@ -37,7 +37,7 @@
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Send Invoice</button>
+                <button type="submit" :disabled="disabledSubmit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Send Invoice</button>
             </form>
             <transition name="fade-slow">
                 <div v-if="message" class="fixed inset-0 z-50 flex items-center justify-center">
@@ -127,6 +127,7 @@ const selectedProducts = ref<SelectedProduct[]>(JSON.parse(localStorage.getItem(
 const name = ref('');
 const email = ref('');
 const loading = ref(false);
+const disabledSubmit = ref(false);
 const message = ref('');
 const errors = ref<{ [key: string]: string[] }>({});
 
@@ -170,6 +171,7 @@ const submitInvoice = async () => {
         messageType.value = 'error';
         return;
     }
+    disabledSubmit.value = true;
     try {
         const res: AxiosResponse = await api.post('/invoices', {
             name: name.value,
@@ -194,6 +196,7 @@ const submitInvoice = async () => {
         errors.value = e?.response?.data?.errors || {};
         messageType.value = 'error';
     }
+    disabledSubmit.value = false;
 };
 
 onMounted(fetchProducts);
