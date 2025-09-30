@@ -20,7 +20,7 @@ class Product extends Model
     protected $fillable = ['name', 'value'];
 
     /**
-     * The roles that belong to the user.
+     * The invoices that belong to the product.
      */
     public function invoices(): BelongsToMany
     {

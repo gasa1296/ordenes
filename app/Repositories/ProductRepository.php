@@ -13,9 +13,9 @@ class ProductRepository implements IProductRepository
         return Product::all();
     }
 
-    public function find($id): ?Product
+    public function find(int $id): ?Product
     {
-        return Product::find($id);
+        return Product::findOrFail($id);
     }
 
     public function create(array $data): Product
@@ -23,18 +23,16 @@ class ProductRepository implements IProductRepository
         return Product::create($data);
     }
 
-    public function update($id, array $data): ?Product
+    public function update(int $id, array $data): ?Product
     {
-        $product = Product::find($id);
-        if ($product) {
-            $product->update($data);
-        }
+        $product = Product::findOrFail($id);
+        $product->update($data);
         return $product;
     }
 
-    public function delete($id): bool
+    public function delete(int $id): bool
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         if ($product) {
             $product->delete();
             return true;
