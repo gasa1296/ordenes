@@ -20,11 +20,19 @@
                                 <input
                                     type="checkbox"
                                     :value="product.id"
-                                    v-model="selectedProducts"
-                                    @change="saveSelectedProducts"
+                                    @change="saveSelectedProducts($event, product.id)"
+                                    :checked="selectedProducts.findIndex(p => p.id === product.id) !== -1"
                                     class="mr-2 accent-blue-500"
                                 />
                                 <span class="flex-1">{{ product.name }}</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    :disabled="selectedProducts.findIndex(p => p.id === product.id) === -1"
+                                    @input="saveSelectedProducts($event, product.id, $event.target?.value)"
+                                    class="ml-2 w-20 border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    placeholder="Qty"
+                                />
                             </label>
                         </div>
                     </div>
@@ -49,7 +57,7 @@
                                 <li v-for="(error, field) in errors" :key="field">
                                     {{ field }}:
                                     <p v-for="(msg, index) in error" :key="index">
-                                        <li>{{ msg }}</li>
+                                        {{ msg }}
                                     </p>
                                 </li>
                             </ul>
@@ -60,7 +68,9 @@
                             <div class="mb-2"><span class="font-bold">Email:</span> {{ invoiceResponse.email }}</div>
                             <div class="mb-2"><span class="font-bold">Products:</span>
                                 <ul class="list-disc ml-6">
-                                    <li v-for="prod in invoiceResponse.products" :key="prod.id">{{ prod.name }}</li>
+                                    <li v-for="prod in invoiceResponse.products" :key="prod.id">
+                                        {{ prod.name }}: {{ prod.quantity }} <span v-if="prod.quantity > 1">unidades</span><span v-else>unidad</span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -90,11 +100,20 @@ interface Product {
     id: number;
     name: string;
 }
+interface SelectedProduct {
+    id: number;
+    quantity: number;
+}
+interface InvoiceProduct {
+    id: number;
+    name: string;
+    quantity: number;
+}
 interface InvoiceResponse {
     id: number;
     name: string;
     email: string;
-    products: Product[];
+    products: InvoiceProduct[];
 }
 const messageType = ref('success');
 
@@ -104,7 +123,7 @@ const closeAlert = () => {
 
 const invoiceResponse = ref<InvoiceResponse|null>(null);
 const products = ref<Product[]>([]);
-const selectedProducts = ref<number[]>(JSON.parse(localStorage.getItem('selectedProducts')) || []);
+const selectedProducts = ref<SelectedProduct[]>(JSON.parse(localStorage.getItem('selectedProducts')) || []);
 const name = ref('');
 const email = ref('');
 const loading = ref(false);
@@ -123,8 +142,26 @@ const fetchProducts = async () => {
     }
 };
 
-const saveSelectedProducts = () => {
-    localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts.value));
+const saveSelectedProducts = (event: any ,id: number, quantity = 1) => {
+    const index = selectedProducts.value.findIndex(p => p.id === id);
+    const { type, checked, value } = event.target;
+    if (type === 'number') {
+        if (index !== -1) {
+            selectedProducts.value[index] = { id: id, quantity: Number(value) || 1 };
+        } else {
+            selectedProducts.value.push({ id: id, quantity: Number(value) || 1 });
+        }
+        localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts.value));
+    } else if (type === 'checkbox') {
+        if (checked) {
+            if (index === -1) {
+                selectedProducts.value.push({ id: id, quantity: 1 });
+            }
+        } else {
+            selectedProducts.value = selectedProducts.value.filter(p => p.id !== id);
+        }
+        localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts.value));
+    }
 };
 
 const submitInvoice = async () => {
