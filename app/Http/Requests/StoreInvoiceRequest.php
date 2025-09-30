@@ -25,7 +25,8 @@ class StoreInvoiceRequest extends FormRequest
             'email' => 'required|email',
             'name' => 'required|string|max:255',
             'products' => 'required|array',
-            'products.*' => 'exists:products,id',
+            'products.*.id' => 'exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ];
     }
 }

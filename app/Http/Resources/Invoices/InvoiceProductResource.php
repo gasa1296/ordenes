@@ -4,9 +4,8 @@ namespace App\Http\Resources\Invoices;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\Products\ProductResource;
 
-class InvoiceResource extends JsonResource
+class InvoiceProductResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,9 +17,7 @@ class InvoiceResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email' => $this->email,
-            'created_at' => $this->created_at,
-            'products' => InvoiceProductResource::collection($this->whenLoaded('products')),
+            'quantity' => $this->pivot->quantity,
         ];
     }
 }

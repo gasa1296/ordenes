@@ -19,7 +19,13 @@ class InvoiceController extends Controller
      */
     public function store(StoreInvoiceRequest $request)
     {
-        $model = $this->invoiceRepository->create($request->validated());
+        $inputs = $request->validated();
+        $prods = [];
+        foreach ($inputs['products'] as $product) {
+            $prods[$product['id']] = ['quantity' => $product['quantity']];
+        }
+        $inputs['products'] = $prods;
+        $model = $this->invoiceRepository->create($inputs);
         $model->load('products');
         return (new InvoiceResource($model))->response();
     }
