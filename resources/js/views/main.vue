@@ -123,7 +123,7 @@ const closeAlert = () => {
 
 const invoiceResponse = ref<InvoiceResponse|null>(null);
 const products = ref<Product[]>([]);
-const selectedProducts = ref<SelectedProduct[]>(JSON.parse(localStorage.getItem('selectedProducts')) || []);
+const selectedProducts = ref<SelectedProduct[]>(JSON.parse(localStorage.getItem('selectedProducts') || '') || []);
 const name = ref('');
 const email = ref('');
 const loading = ref(false);
