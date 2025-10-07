@@ -28,11 +28,10 @@
                                     class="mr-2 accent-blue-500"
                                 />
                                 <span class="flex-1">{{ product.name }}: {{ product.price }}$</span>
-                                <input
+                                <input v-if="selectedProducts.findIndex(p => p.id === product.id) !== -1"
                                     type="number"
                                     min="1"
                                     value="1"
-                                    :disabled="selectedProducts.findIndex(p => p.id === product.id) === -1"
                                     @input="saveSelectedProducts($event, product.id, Number(($event.target as HTMLInputElement).value))"
                                     class="ml-2 w-20 border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     placeholder="Qty"
