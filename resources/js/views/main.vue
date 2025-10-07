@@ -1,19 +1,22 @@
 <template>
     <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div class="w-full max-w-lg bg-white rounded-lg shadow-lg p-6">
-            <h1 class="text-2xl font-bold mb-6 text-center">Product Selection</h1>
-            <form @submit.prevent="submitInvoice" class="space-y-6">
+            <h1 class="text-2xl font-bold mb-6 text-center">{{ phase === 1 ? 'Registrar usuario' : 'Seleccionar productos' }}</h1>
+            <form v-if="phase === 1" @submit.prevent="registerInvoiceId" class="space-y-6">
                 <div class="flex flex-col">
-                    <label class="mb-1 font-medium text-gray-700">Name:</label>
+                    <label class="mb-1 font-medium text-gray-700">Nombre:</label>
                     <input v-model="name" required class="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
                 </div>
                 <div class="flex flex-col">
-                    <label class="mb-1 font-medium text-gray-700">Email:</label>
+                    <label class="mb-1 font-medium text-gray-700">Correo:</label>
                     <input v-model="email" type="email" required class="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
                 </div>
+                <button type="submit" :disabled="disabledSubmit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Registrar</button>
+            </form>
+            <form v-else @submit.prevent="submitInvoice" class="space-y-6">
                 <div>
-                    <h2 class="text-lg font-semibold mb-2">Products</h2>
-                    <div v-if="loading" class="text-blue-500">Loading products...</div>
+                    <h2 class="text-lg font-semibold mb-2">Productos</h2>
+                    <div v-if="loading" class="text-blue-500">Cargando productos...</div>
                     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div v-for="product in products" :key="product.id" class="flex items-center bg-gray-100 rounded p-2">
                             <label class="flex items-center w-full cursor-pointer">
@@ -24,12 +27,13 @@
                                     :checked="selectedProducts.findIndex(p => p.id === product.id) !== -1"
                                     class="mr-2 accent-blue-500"
                                 />
-                                <span class="flex-1">{{ product.name }}</span>
+                                <span class="flex-1">{{ product.name }}: {{ product.price }}$</span>
                                 <input
                                     type="number"
                                     min="1"
+                                    value="1"
                                     :disabled="selectedProducts.findIndex(p => p.id === product.id) === -1"
-                                    @input="saveSelectedProducts($event, product.id, $event.target?.value)"
+                                    @input="saveSelectedProducts($event, product.id, Number(($event.target as HTMLInputElement).value))"
                                     class="ml-2 w-20 border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     placeholder="Qty"
                                 />
@@ -37,7 +41,7 @@
                         </div>
                     </div>
                 </div>
-                <button type="submit" :disabled="disabledSubmit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Send Invoice</button>
+                <button type="submit" :disabled="disabledSubmit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Enviar factura</button>
             </form>
             <transition name="fade-slow">
                 <div v-if="message" class="fixed inset-0 z-50 flex items-center justify-center">
@@ -69,10 +73,11 @@
                             <div class="mb-2"><span class="font-bold">Products:</span>
                                 <ul class="list-disc ml-6">
                                     <li v-for="prod in invoiceResponse.products" :key="prod.id">
-                                        {{ prod.name }}: {{ prod.quantity }} <span v-if="prod.quantity > 1">unidades</span><span v-else>unidad</span>
+                                        {{ prod.name }}: {{ prod.quantity }}<span v-if="prod.quantity > 1">unidades</span><span v-else>unidad</span>  * {{ prod.price }} = {{ prod.quantity * prod.price }}$
                                     </li>
                                 </ul>
                             </div>
+                            <div class="mb-2"><span class="font-bold">Total:</span> {{ invoiceResponse.total }}$ </div>
                         </div>
                     </div>
                 </div>
@@ -99,6 +104,7 @@ import { type AxiosResponse, type AxiosError } from 'axios';
 interface Product {
     id: number;
     name: string;
+    price: number;
 }
 interface SelectedProduct {
     id: number;
@@ -108,12 +114,14 @@ interface InvoiceProduct {
     id: number;
     name: string;
     quantity: number;
+    price: number;
 }
 interface InvoiceResponse {
     id: number;
     name: string;
     email: string;
     products: InvoiceProduct[];
+    total?: number;
 }
 const messageType = ref('success');
 
@@ -121,9 +129,11 @@ const closeAlert = () => {
     message.value = '';
 };
 
+const invoiceId = ref<number|null>(Number(localStorage.getItem('invoiceId')) || null);
+const phase = ref(invoiceId.value ? 2 : 1);
 const invoiceResponse = ref<InvoiceResponse|null>(null);
 const products = ref<Product[]>([]);
-const selectedProducts = ref<SelectedProduct[]>(JSON.parse(localStorage.getItem('selectedProducts') || '') || []);
+const selectedProducts = ref<SelectedProduct[]>([]);
 const name = ref('');
 const email = ref('');
 const loading = ref(false);
@@ -173,19 +183,22 @@ const submitInvoice = async () => {
     }
     disabledSubmit.value = true;
     try {
-        const res: AxiosResponse = await api.post('/invoices', {
-            name: name.value,
-            email: email.value,
+        const res: AxiosResponse = await api.put(`/invoices/${invoiceId.value}`, {
             products: selectedProducts.value
         });
         if (res.status === 200 || res.status === 201) {
             message.value = res.data?.message || 'Invoice sent successfully!';
             invoiceResponse.value = res.data.data;
             messageType.value = 'success';
+
+            localStorage.removeItem('invoiceId');
             localStorage.removeItem('selectedProducts');
+
             selectedProducts.value = [];
             name.value = '';
             email.value = '';
+            invoiceId.value = null;
+            phase.value = 1;
         } else {
             message.value = res.data?.message || 'Failed to send invoice.';
             errors.value = res.data?.errors || {};
@@ -198,6 +211,61 @@ const submitInvoice = async () => {
     }
     disabledSubmit.value = false;
 };
+const registerInvoiceId = async () => {
+    disabledSubmit.value = true;
+    try {
+        const res: AxiosResponse = await api.post('/invoices', {
+            name: name.value,
+            email: email.value,
+        });
+        if (res.status === 200 || res.status === 201) {
+            message.value = res.data?.message || 'Invoice started successfully!';
+            messageType.value = 'success';
 
-onMounted(fetchProducts);
+            name.value = res.data.data.name;
+            email.value = res.data.data.email;
+
+            invoiceId.value = res.data.data.id;
+            localStorage.setItem('invoiceId', invoiceId.value?.toString() || '');
+            phase.value = 2;
+        } else {
+            message.value = res.data?.message || 'Failed to send invoice.';
+            errors.value = res.data?.errors || {};
+            messageType.value = 'error';
+        }
+    } catch (e: any) {
+        message.value = e?.response?.data?.message || 'Error sending invoice.';
+        errors.value = e?.response?.data?.errors || {};
+        messageType.value = 'error';
+    }
+    disabledSubmit.value = false;
+};
+const fetchInvoice = async (id: number) => {
+    try {
+        const res: AxiosResponse = await api.get(`/invoices/${id}`);
+        if (res.status === 200) {
+            name.value = res.data.data.name;
+            email.value = res.data.data.email;
+        }
+    } catch (e: any) {
+        message.value = e?.response?.data?.message || 'Error sending invoice.';
+        errors.value = e?.response?.data?.errors || {};
+        messageType.value = 'error';
+    }
+};
+
+onMounted(() => {
+    const storedProducts = localStorage.getItem('selectedProducts') || '';
+    selectedProducts.value = storedProducts ? JSON.parse(storedProducts) : [];
+
+    const storedInvoiceId = localStorage.getItem('invoiceId');
+    invoiceId.value = storedInvoiceId !== null ? Number(storedInvoiceId) : null;
+
+    if (invoiceId.value) {
+        phase.value = 2;
+        fetchInvoice(invoiceId.value);
+    }
+
+    fetchProducts();
+});
 </script>
