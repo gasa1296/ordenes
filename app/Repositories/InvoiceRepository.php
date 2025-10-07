@@ -20,7 +20,9 @@ class InvoiceRepository implements IInvoiceRepository
     public function create(array $data): Invoice
     {
         $model = Invoice::create($data);
-        $model->products()->attach($data['products']);
+        if(isset($data['products'])) {
+            $model->products()->attach($data['products']);
+        }
         return $model;
     }
 
@@ -28,7 +30,9 @@ class InvoiceRepository implements IInvoiceRepository
     {
         $model = Invoice::findOrFail($id);
         $model->update($data);
-        $model->products()->sync($data['products']);
+        if(isset($data['products'])) {
+            $model->products()->sync($data['products']);
+        }
         return $model;
     }
 

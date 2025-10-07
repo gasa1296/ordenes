@@ -21,6 +21,7 @@ class InvoiceResource extends JsonResource
             'email' => $this->email,
             'created_at' => $this->created_at,
             'products' => InvoiceProductResource::collection($this->whenLoaded('products')),
+            'total' => $this->total,
         ];
     }
 }

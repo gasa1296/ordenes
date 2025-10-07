@@ -17,6 +17,7 @@ class InvoiceProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'price' => $this->price,
             'quantity' => $this->pivot->quantity,
         ];
     }
