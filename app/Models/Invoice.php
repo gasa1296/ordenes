@@ -15,7 +15,7 @@ class Invoice extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = ['name', 'email',];
+    protected $fillable = ['name', 'email', 'status', 'total'];
 
     /**
      * The product that belong to the invoices.
