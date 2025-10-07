@@ -126,6 +126,9 @@ const messageType = ref('success');
 
 const closeAlert = () => {
     message.value = '';
+    errors.value = {};
+    invoiceResponse.value = null;
+    messageType.value = 'success';
 };
 
 const invoiceId = ref<number|null>(Number(localStorage.getItem('invoiceId')) || null);

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('invoices', function (Blueprint $table) {
             $table->string('total')->after('name')->nullable();
-            $table->enum('status', ['pending', 'paid', 'canceled'])->default('pending');
+            $table->enum('status', ['pending', 'ordered', 'canceled'])->default('pending');
         });
     }
 
