@@ -39,6 +39,9 @@ class InvoiceController extends Controller
     {
         $inputs = $request->validated();
         $prods = [];
+        if ($invoice->status === 'paid') {
+            return response()->json(['message' => 'Cannot update a paid invoice.'], 400);
+        }
         if (!isset($inputs['products'])) {
             $inputs['products'] = [];
         }
